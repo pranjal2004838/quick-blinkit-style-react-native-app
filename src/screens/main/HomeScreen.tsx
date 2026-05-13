@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   StatusBar,
   ScrollView,
+  Platform,
 } from 'react-native';
 import {useSelector, useDispatch} from 'react-redux';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
@@ -26,8 +27,23 @@ import {
   decrement,
   selectCartQtyMap,
   selectCartCount,
+  selectGrandTotal,
 } from '../../store/cartSlice';
 import {RootState} from '../../store';
+import {logout} from '../../store/authSlice';
+
+// --- palette ---
+const C = {
+  yellow: '#F8CB46',
+  yellowDark: '#E5B800',
+  green: '#22C55E',
+  bg: '#F3F4F6',
+  card: '#FFFFFF',
+  text: '#111827',
+  sub: '#6B7280',
+  light: '#9CA3AF',
+  border: '#E5E7EB',
+};
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -40,8 +56,8 @@ const HomeScreen = ({navigation}: Props) => {
 
   const qtyMap = useSelector((state: RootState) => selectCartQtyMap(state));
   const cartCount = useSelector((state: RootState) => selectCartCount(state));
+  const grandTotal = useSelector((state: RootState) => selectGrandTotal(state));
 
-  // recompute filtered list only when category or search changes
   const products = useMemo(
     () => filterProducts(activeCat, search),
     [activeCat, search],
@@ -51,22 +67,18 @@ const HomeScreen = ({navigation}: Props) => {
     (product: Product) => dispatch(addToCart(product)),
     [dispatch],
   );
-
   const onIncrement = useCallback(
     (id: string) => dispatch(increment(id)),
     [dispatch],
   );
-
   const onDecrement = useCallback(
     (id: string) => dispatch(decrement(id)),
     [dispatch],
   );
 
-  // product card renderer — memoized to avoid recreating on every render
   const renderItem = useCallback(
     ({item}: {item: Product}) => {
       const qty = qtyMap[item.id] || 0;
-
       return (
         <View style={styles.card}>
           <Image
@@ -83,20 +95,22 @@ const HomeScreen = ({navigation}: Props) => {
             <TouchableOpacity
               style={styles.addBtn}
               onPress={() => onAddPress(item)}
-              activeOpacity={0.7}>
+              activeOpacity={0.75}>
               <Text style={styles.addBtnLabel}>ADD</Text>
             </TouchableOpacity>
           ) : (
             <View style={styles.qtyRow}>
               <TouchableOpacity
                 style={styles.qtyBtn}
-                onPress={() => onDecrement(item.id)}>
+                onPress={() => onDecrement(item.id)}
+                hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}>
                 <Text style={styles.qtyBtnLabel}>−</Text>
               </TouchableOpacity>
               <Text style={styles.qtyCount}>{qty}</Text>
               <TouchableOpacity
                 style={styles.qtyBtn}
-                onPress={() => onIncrement(item.id)}>
+                onPress={() => onIncrement(item.id)}
+                hitSlop={{top: 6, bottom: 6, left: 6, right: 6}}>
                 <Text style={styles.qtyBtnLabel}>+</Text>
               </TouchableOpacity>
             </View>
@@ -109,42 +123,60 @@ const HomeScreen = ({navigation}: Props) => {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <StatusBar backgroundColor="#F8CB46" barStyle="dark-content" />
+      <StatusBar backgroundColor={C.yellow} barStyle="dark-content" />
 
-      {/* blinkit-style yellow header */}
+      {/* ── Yellow header ── */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>QuickShop</Text>
-        <View style={styles.pill}>
-          <Text style={styles.pillText}>🕐 Delivery in 10 minutes</Text>
+        <View>
+          <Text style={styles.headerBrand}>QuickShop</Text>
+          <View style={styles.deliveryPill}>
+            <Text style={styles.deliveryDot}>●</Text>
+            <Text style={styles.deliveryText}>Delivery in 10 minutes</Text>
+          </View>
+        </View>
+        <TouchableOpacity
+          style={styles.logoutBtn}
+          onPress={() => dispatch(logout())}
+          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── Search ── */}
+      <View style={styles.searchWrap}>
+        <View style={styles.searchBar}>
+          <Text style={styles.searchIcon}>🔍</Text>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search for atta, eggs, coke..."
+            placeholderTextColor={C.light}
+            value={search}
+            onChangeText={setSearch}
+            autoCorrect={false}
+            returnKeyType="search"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')}>
+              <Text style={styles.clearIcon}>✕</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
-      {/* search */}
-      <View style={styles.searchWrap}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search for atta, dal, coke..."
-          placeholderTextColor="#999"
-          value={search}
-          onChangeText={setSearch}
-          autoCorrect={false}
-          returnKeyType="search"
-        />
-      </View>
-
-      {/* category chips — horizontal scroll */}
+      {/* ── Categories ── */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         style={styles.catScroll}
-        contentContainerStyle={styles.catContainer}>
+        contentContainerStyle={styles.catContent}>
         {CATEGORIES.map(cat => {
           const active = cat.id === activeCat;
           return (
             <TouchableOpacity
               key={cat.id}
               style={[styles.chip, active && styles.chipActive]}
-              onPress={() => setActiveCat(cat.id)}>
+              onPress={() => setActiveCat(cat.id)}
+              activeOpacity={0.7}>
               <Text style={[styles.chipText, active && styles.chipTextActive]}>
                 {cat.title}
               </Text>
@@ -153,17 +185,23 @@ const HomeScreen = ({navigation}: Props) => {
         })}
       </ScrollView>
 
-      {/* product grid */}
+      {/* ── Product grid ── */}
       <FlatList
         data={products}
         renderItem={renderItem}
         keyExtractor={p => p.id}
         numColumns={2}
-        contentContainerStyle={styles.grid}
+        contentContainerStyle={[
+          styles.grid,
+          cartCount > 0 && {paddingBottom: 88},
+        ]}
         columnWrapperStyle={styles.gridRow}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.empty}>
+            <Text style={styles.emptyEmoji}>
+              {search.length > 0 ? '🔍' : '📦'}
+            </Text>
             <Text style={styles.emptyText}>
               {search.length > 0
                 ? `No results for "${search}"`
@@ -173,15 +211,19 @@ const HomeScreen = ({navigation}: Props) => {
         }
       />
 
-      {/* floating cart bar */}
+      {/* ── Floating cart bar ── */}
       {cartCount > 0 && (
         <TouchableOpacity
           style={styles.cartBar}
           onPress={() => navigation.navigate('Cart')}
-          activeOpacity={0.85}>
-          <Text style={styles.cartBarText}>
-            🛒 {cartCount} item{cartCount !== 1 ? 's' : ''} — View Cart
-          </Text>
+          activeOpacity={0.9}>
+          <View style={styles.cartBarLeft}>
+            <Text style={styles.cartBarCount}>
+              {cartCount} item{cartCount !== 1 ? 's' : ''}
+            </Text>
+            <Text style={styles.cartBarSub}>View Cart →</Text>
+          </View>
+          <Text style={styles.cartBarTotal}>{formatPrice(grandTotal)}</Text>
         </TouchableOpacity>
       )}
     </SafeAreaView>
@@ -189,181 +231,198 @@ const HomeScreen = ({navigation}: Props) => {
 };
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  // --- header ---
+  safe: {flex: 1, backgroundColor: C.bg},
+
+  // header
   header: {
-    backgroundColor: '#F8CB46',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 14,
+    backgroundColor: C.yellow,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+  headerBrand: {
+    fontSize: 24,
+    fontWeight: '800',
     color: '#1a1a1a',
+    letterSpacing: -0.5,
   },
-  pill: {
-    backgroundColor: '#fff',
-    alignSelf: 'flex-start',
-    borderRadius: 20,
+  deliveryPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  deliveryDot: {fontSize: 8, color: '#1a1a1a', marginRight: 5},
+  deliveryText: {fontSize: 12, fontWeight: '600', color: '#1a1a1a'},
+  logoutBtn: {
+    backgroundColor: 'rgba(0,0,0,0.12)',
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingVertical: 6,
+    borderRadius: 20,
     marginTop: 6,
   },
-  pillText: {
-    fontSize: 12,
-    color: '#333',
-    fontWeight: '600',
-  },
-  // --- search ---
+  logoutText: {fontSize: 12, fontWeight: '700', color: '#1a1a1a'},
+
+  // search
   searchWrap: {
+    backgroundColor: C.card,
     paddingHorizontal: 16,
     paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
   },
-  searchInput: {
-    backgroundColor: '#f2f2f2',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#333',
-  },
-  // --- categories ---
-  catScroll: {
-    maxHeight: 44,
-    paddingLeft: 16,
-  },
-  catContainer: {
+  searchBar: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: 16,
+    backgroundColor: C.bg,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 10 : 6,
+  },
+  searchIcon: {fontSize: 16, marginRight: 8},
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: C.text,
+    paddingVertical: 0,
+  },
+  clearIcon: {fontSize: 14, color: C.light, paddingLeft: 8},
+
+  // categories
+  catScroll: {
+    backgroundColor: C.card,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    maxHeight: 52,
+  },
+  catContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: 'center',
   },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: C.bg,
     marginRight: 8,
+    borderWidth: 1,
+    borderColor: C.border,
   },
   chipActive: {
-    backgroundColor: '#F8CB46',
+    backgroundColor: C.yellow,
+    borderColor: C.yellowDark,
   },
-  chipText: {
-    fontSize: 13,
-    color: '#555',
-    fontWeight: '500',
-  },
-  chipTextActive: {
-    color: '#1a1a1a',
-    fontWeight: '700',
-  },
-  // --- grid ---
-  grid: {
-    paddingHorizontal: 12,
-    paddingTop: 10,
-    paddingBottom: 80,
-  },
-  gridRow: {
-    justifyContent: 'space-between',
-  },
+  chipText: {fontSize: 13, color: C.sub, fontWeight: '500'},
+  chipTextActive: {color: '#1a1a1a', fontWeight: '700'},
+
+  // grid
+  grid: {paddingHorizontal: 12, paddingTop: 12, paddingBottom: 20},
+  gridRow: {justifyContent: 'space-between'},
+
+  // card
   card: {
-    width: '48%',
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    width: '48.5%',
+    backgroundColor: C.card,
+    borderRadius: 14,
     marginBottom: 12,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#eee',
+    padding: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 1},
+    shadowOpacity: 0.07,
+    shadowRadius: 4,
   },
   cardImg: {
     width: '100%',
-    height: 110,
-    borderRadius: 8,
-    backgroundColor: '#f5f5f5',
+    height: 115,
+    borderRadius: 10,
+    backgroundColor: '#F9FAFB',
   },
   cardName: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#333',
-    marginTop: 8,
-    minHeight: 34,
+    color: C.text,
+    marginTop: 9,
+    minHeight: 36,
+    lineHeight: 18,
   },
   cardPrice: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginTop: 4,
+    fontSize: 15,
+    fontWeight: '800',
+    color: C.text,
+    marginTop: 3,
+    marginBottom: 8,
   },
   addBtn: {
-    borderColor: '#4CAF50',
     borderWidth: 1.5,
-    borderRadius: 6,
-    paddingVertical: 6,
+    borderColor: C.green,
+    borderRadius: 8,
+    paddingVertical: 7,
     alignItems: 'center',
-    marginTop: 8,
   },
   addBtnLabel: {
-    color: '#4CAF50',
-    fontWeight: 'bold',
+    color: C.green,
+    fontWeight: '800',
     fontSize: 13,
+    letterSpacing: 0.5,
   },
   qtyRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#4CAF50',
-    borderRadius: 6,
-    marginTop: 8,
-    paddingVertical: 4,
+    backgroundColor: C.green,
+    borderRadius: 8,
+    paddingVertical: 5,
   },
   qtyBtn: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 2,
   },
   qtyBtnLabel: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 22,
   },
   qtyCount: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: 'bold',
-    minWidth: 24,
+    fontSize: 15,
+    fontWeight: '800',
+    minWidth: 26,
     textAlign: 'center',
   },
-  // --- empty ---
-  empty: {
-    alignItems: 'center',
-    marginTop: 60,
-  },
-  emptyText: {
-    fontSize: 15,
-    color: '#999',
-  },
-  // --- cart bar ---
+
+  // empty
+  empty: {alignItems: 'center', marginTop: 60, paddingHorizontal: 24},
+  emptyEmoji: {fontSize: 44, marginBottom: 12},
+  emptyText: {fontSize: 15, color: C.sub, textAlign: 'center'},
+
+  // cart bar
   cartBar: {
     position: 'absolute',
     bottom: 16,
     left: 16,
     right: 16,
-    backgroundColor: '#4CAF50',
-    borderRadius: 10,
+    backgroundColor: C.green,
+    borderRadius: 14,
     paddingVertical: 14,
+    paddingHorizontal: 18,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    elevation: 6,
+    shadowColor: C.green,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
   },
-  cartBarText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: 'bold',
-  },
+  cartBarLeft: {},
+  cartBarCount: {color: '#fff', fontSize: 15, fontWeight: '700'},
+  cartBarSub: {color: 'rgba(255,255,255,0.8)', fontSize: 12, marginTop: 1},
+  cartBarTotal: {color: '#fff', fontSize: 16, fontWeight: '800'},
 });
 
 export default HomeScreen;

@@ -8,9 +8,21 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  StatusBar,
 } from 'react-native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../navigation/AppNavigator';
+
+const C = {
+  yellow: '#F8CB46',
+  green: '#22C55E',
+  bg: '#FFFFFF',
+  text: '#111827',
+  sub: '#6B7280',
+  light: '#9CA3AF',
+  border: '#E5E7EB',
+  red: '#EF4444',
+};
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
@@ -21,10 +33,9 @@ const LoginScreen = ({navigation}: Props) => {
   const [error, setError] = useState('');
 
   const handleContinue = () => {
-    // strip anything that isn't a digit just to be safe
     const cleaned = phone.replace(/\D/g, '');
     if (cleaned.length !== 10) {
-      setError('Please enter a valid 10-digit mobile number');
+      setError('Enter a valid 10-digit mobile number');
       return;
     }
     setError('');
@@ -32,151 +43,185 @@ const LoginScreen = ({navigation}: Props) => {
   };
 
   const onChangePhone = (text: string) => {
-    // only allow digits
     const digits = text.replace(/\D/g, '');
     setPhone(digits);
-    if (error) setError(''); // clear error as user types
+    if (error) setError('');
   };
 
   const isValid = phone.length === 10;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.content}>
-        <Text style={styles.logo}>🛒</Text>
-        <Text style={styles.title}>QuickShop</Text>
-        <Text style={styles.subtitle}>India's last minute app</Text>
+        style={styles.kav}>
 
-        <Text style={styles.label}>Log in or Sign up</Text>
-
-        <View style={styles.phoneRow}>
-          <View style={styles.prefixBox}>
-            <Text style={styles.prefix}>+91</Text>
+        <View style={styles.top}>
+          {/* Brand */}
+          <View style={styles.logoWrap}>
+            <Text style={styles.logoEmoji}>🛒</Text>
           </View>
-          <TextInput
-            style={styles.phoneInput}
-            placeholder="Enter mobile number"
-            placeholderTextColor="#aaa"
-            keyboardType="phone-pad"
-            maxLength={10}
-            value={phone}
-            onChangeText={onChangePhone}
-            autoFocus
-          />
+          <Text style={styles.brand}>QuickShop</Text>
+          <Text style={styles.tagline}>Groceries in 10 minutes</Text>
         </View>
 
-        {error.length > 0 && <Text style={styles.errorText}>{error}</Text>}
-
-        <TouchableOpacity
-          style={[styles.btn, isValid && styles.btnActive]}
-          onPress={handleContinue}
-          disabled={!isValid}
-          activeOpacity={0.7}>
-          <Text style={[styles.btnText, isValid && styles.btnTextActive]}>
-            Continue
+        <View style={styles.form}>
+          <Text style={styles.formTitle}>Log in or Sign up</Text>
+          <Text style={styles.formSub}>
+            We'll send a verification code to your number
           </Text>
-        </TouchableOpacity>
 
-        <Text style={styles.hint}>
-          By continuing, you agree to our Terms of Service
-        </Text>
+          {/* Phone input */}
+          <View style={[styles.inputWrap, error ? styles.inputWrapErr : null, isValid && !error ? styles.inputWrapOk : null]}>
+            <View style={styles.prefix}>
+              <Text style={styles.flag}>🇮🇳</Text>
+              <Text style={styles.prefixTxt}>+91</Text>
+            </View>
+            <View style={styles.divider} />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter mobile number"
+              placeholderTextColor={C.light}
+              keyboardType="phone-pad"
+              maxLength={10}
+              value={phone}
+              onChangeText={onChangePhone}
+              autoFocus
+            />
+            {isValid && <Text style={styles.tick}>✓</Text>}
+          </View>
+
+          {error.length > 0 && (
+            <Text style={styles.errorTxt}>{error}</Text>
+          )}
+
+          <TouchableOpacity
+            style={[styles.btn, isValid && styles.btnActive]}
+            onPress={handleContinue}
+            disabled={!isValid}
+            activeOpacity={0.8}>
+            <Text style={[styles.btnTxt, isValid && styles.btnTxtActive]}>
+              Continue →
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={styles.terms}>
+            By continuing, you agree to our{' '}
+            <Text style={styles.termsLink}>Terms of Service</Text>
+          </Text>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safe: {flex: 1, backgroundColor: C.bg},
+  kav: {flex: 1},
+
+  top: {
     flex: 1,
-    backgroundColor: '#fff',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: 32,
+    backgroundColor: C.yellow,
+    paddingTop: 60,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: 24,
+  logoWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.6)',
     justifyContent: 'center',
-  },
-  logo: {
-    fontSize: 48,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#1a1a1a',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#888',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  phoneRow: {
+  logoEmoji: {fontSize: 40},
+  brand: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#1a1a1a',
+    letterSpacing: -0.5,
+  },
+  tagline: {
+    fontSize: 14,
+    color: '#444',
+    marginTop: 4,
+    fontWeight: '500',
+  },
+
+  form: {
+    backgroundColor: C.bg,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    padding: 26,
+    paddingBottom: 36,
+    marginTop: -20,
+  },
+  formTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: C.text,
+    marginBottom: 4,
+  },
+  formSub: {
+    fontSize: 13,
+    color: C.sub,
+    marginBottom: 22,
+    lineHeight: 18,
+  },
+
+  // phone input
+  inputWrap: {
     flexDirection: 'row',
+    alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#ddd',
-    borderRadius: 10,
+    borderColor: C.border,
+    borderRadius: 14,
     overflow: 'hidden',
-    marginBottom: 8,
+    backgroundColor: '#FAFAFA',
+    marginBottom: 6,
   },
-  prefixBox: {
-    backgroundColor: '#f5f5f5',
-    paddingHorizontal: 14,
-    justifyContent: 'center',
-    borderRightWidth: 1,
-    borderRightColor: '#ddd',
-  },
+  inputWrapErr: {borderColor: C.red},
+  inputWrapOk: {borderColor: C.green},
   prefix: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 14,
   },
-  phoneInput: {
+  flag: {fontSize: 18, marginRight: 6},
+  prefixTxt: {fontSize: 15, fontWeight: '700', color: C.text},
+  divider: {
+    width: 1,
+    height: 24,
+    backgroundColor: C.border,
+  },
+  input: {
     flex: 1,
     paddingHorizontal: 14,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#1a1a1a',
+    color: C.text,
   },
-  errorText: {
-    color: '#e53935',
-    fontSize: 13,
-    marginBottom: 8,
-    marginLeft: 4,
-  },
+  tick: {fontSize: 18, color: C.green, paddingRight: 14},
+  errorTxt: {color: C.red, fontSize: 12, marginBottom: 10, marginLeft: 2},
+
   btn: {
-    backgroundColor: '#e8e8e8',
-    paddingVertical: 15,
-    borderRadius: 10,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 14,
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 6,
+    marginBottom: 16,
   },
-  btnActive: {
-    backgroundColor: '#F8CB46',
-  },
-  btnText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#999',
-  },
-  btnTextActive: {
-    color: '#1a1a1a',
-  },
-  hint: {
-    fontSize: 11,
-    color: '#bbb',
-    textAlign: 'center',
-    marginTop: 16,
-  },
+  btnActive: {backgroundColor: C.yellow},
+  btnTxt: {fontSize: 16, fontWeight: '700', color: '#9CA3AF'},
+  btnTxtActive: {color: '#1a1a1a'},
+
+  terms: {fontSize: 12, color: C.light, textAlign: 'center', lineHeight: 18},
+  termsLink: {color: C.sub, fontWeight: '600'},
 });
 
 export default LoginScreen;

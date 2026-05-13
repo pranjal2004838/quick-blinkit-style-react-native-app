@@ -6,10 +6,24 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
+  StatusBar,
+  Platform,
 } from 'react-native';
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {RootStackParamList} from '../../navigation/AppNavigator';
 import {CommonActions} from '@react-navigation/native';
+
+const C = {
+  yellow: '#F8CB46',
+  green: '#22C55E',
+  bg: '#F3F4F6',
+  card: '#FFFFFF',
+  text: '#111827',
+  sub: '#6B7280',
+  light: '#9CA3AF',
+  border: '#E5E7EB',
+  orange: '#F97316',
+};
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Success'>;
 
@@ -17,122 +31,227 @@ const SuccessScreen = ({route, navigation}: Props) => {
   const {orderId, eta, address, payMode, summary, totalDisplay} = route.params;
 
   const goHome = () => {
-    // reset nav stack so the user can't swipe back to a completed order
     navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{name: 'Home'}],
-      }),
+      CommonActions.reset({index: 0, routes: [{name: 'Home'}]}),
     );
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* big green checkmark */}
-        <View style={styles.checkCircle}>
-          <Text style={styles.checkMark}>✓</Text>
+    <SafeAreaView style={styles.safe}>
+      <StatusBar barStyle="dark-content" backgroundColor={C.bg} />
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}>
+
+        {/* Success badge */}
+        <View style={styles.badgeOuter}>
+          <View style={styles.badgeInner}>
+            <Text style={styles.checkMark}>✓</Text>
+          </View>
         </View>
 
         <Text style={styles.heading}>Order Placed!</Text>
         <Text style={styles.orderId}>{orderId}</Text>
 
+        {/* ETA pill */}
         <View style={styles.etaBadge}>
-          <Text style={styles.etaText}>🕐 Estimated delivery: {eta}</Text>
+          <Text style={styles.etaEmoji}>🛵</Text>
+          <Text style={styles.etaText}>Arriving in {eta}</Text>
         </View>
 
-        {/* details card */}
+        {/* Details card */}
         <View style={styles.card}>
-          <DetailRow label="Delivery Address" value={address} />
-          <DetailRow label="Payment" value={payMode} />
+          <Row label="📍 Delivery To" value={address} />
+          <View style={styles.separator} />
+          <Row label="💳 Payment" value={payMode} />
+          <View style={styles.separator} />
 
-          <View style={styles.divider} />
+          <Text style={styles.summaryTitle}>🧾 Your Order</Text>
+          {summary.split('\n').map((line, idx) => (
+            <Text key={idx} style={styles.summaryLine}>
+              {line}
+            </Text>
+          ))}
 
-          <Text style={styles.summaryTitle}>Order Summary</Text>
-          <Text style={styles.summaryBody}>{summary}</Text>
-
-          <View style={styles.divider} />
-
-          <View style={styles.totalRow}>
-            <Text style={styles.totalLabel}>Total Paid</Text>
-            <Text style={styles.totalVal}>{totalDisplay}</Text>
+          <View style={styles.totalBox}>
+            <Text style={styles.totalBoxLabel}>Total Paid</Text>
+            <Text style={styles.totalBoxVal}>{totalDisplay}</Text>
           </View>
         </View>
 
+        {/* CTA */}
         <TouchableOpacity
           style={styles.continueBtn}
           onPress={goHome}
-          activeOpacity={0.8}>
-          <Text style={styles.continueBtnText}>Continue Shopping</Text>
+          activeOpacity={0.85}>
+          <Text style={styles.continueBtnTxt}>Continue Shopping 🛍️</Text>
         </TouchableOpacity>
+
+        <Text style={styles.thanks}>
+          Thank you for shopping with QuickShop ❤️
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-// small helper component — not worth putting in its own file
-const DetailRow = ({label, value}: {label: string; value: string}) => (
-  <View style={styles.detailBlock}>
-    <Text style={styles.detailLabel}>{label}</Text>
-    <Text style={styles.detailValue}>{value}</Text>
+const Row = ({label, value}: {label: string; value: string}) => (
+  <View style={rowStyles.wrap}>
+    <Text style={rowStyles.label}>{label}</Text>
+    <Text style={rowStyles.value}>{value}</Text>
   </View>
 );
+const rowStyles = StyleSheet.create({
+  wrap: {marginBottom: 4},
+  label: {fontSize: 12, color: C.sub, marginBottom: 4, fontWeight: '600'},
+  value: {fontSize: 14, color: C.text, lineHeight: 20},
+});
 
 const styles = StyleSheet.create({
-  container: {flex: 1, backgroundColor: '#f8f8f8'},
-  content: {padding: 24, alignItems: 'center'},
-  checkCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#4CAF50',
+  safe: {flex: 1, backgroundColor: C.bg},
+  content: {
+    padding: 24,
+    alignItems: 'center',
+    paddingBottom: 40,
+  },
+
+  // badge
+  badgeOuter: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#DCFCE7',
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 24,
-    marginBottom: 16,
-  },
-  checkMark: {color: '#fff', fontSize: 36, fontWeight: 'bold'},
-  heading: {fontSize: 22, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 4},
-  orderId: {fontSize: 14, color: '#888', marginBottom: 16},
-  etaBadge: {
-    backgroundColor: '#FFF3E0',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
     marginBottom: 20,
   },
-  etaText: {fontSize: 13, color: '#E65100', fontWeight: '600'},
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#eee',
-    marginBottom: 24,
+  badgeInner: {
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: C.green,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  detailBlock: {marginBottom: 12},
-  detailLabel: {fontSize: 12, color: '#999', marginBottom: 2},
-  detailValue: {fontSize: 14, color: '#333'},
-  divider: {height: 1, backgroundColor: '#eee', marginVertical: 12},
-  summaryTitle: {fontSize: 14, fontWeight: 'bold', color: '#1a1a1a', marginBottom: 8},
-  summaryBody: {fontSize: 13, color: '#555', lineHeight: 20},
-  totalRow: {
+  checkMark: {
+    color: '#fff',
+    fontSize: 38,
+    fontWeight: '700',
+    lineHeight: 42,
+  },
+
+  heading: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: C.text,
+    marginBottom: 4,
+  },
+  orderId: {
+    fontSize: 13,
+    color: C.sub,
+    marginBottom: 18,
+    letterSpacing: 0.5,
+    fontWeight: '600',
+  },
+
+  // eta
+  etaBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 24,
+    marginBottom: 22,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  etaEmoji: {fontSize: 18, marginRight: 8},
+  etaText: {
+    fontSize: 14,
+    color: '#92400E',
+    fontWeight: '700',
+  },
+
+  // card
+  card: {
+    backgroundColor: C.card,
+    borderRadius: 18,
+    padding: 18,
+    width: '100%',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    marginBottom: 22,
+  },
+  separator: {
+    height: 1,
+    backgroundColor: C.border,
+    marginVertical: 14,
+  },
+  summaryTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: C.sub,
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  summaryLine: {
+    fontSize: 13,
+    color: C.text,
+    lineHeight: 22,
+  },
+  totalBox: {
+    backgroundColor: '#F0FDF4',
+    borderRadius: 12,
+    padding: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: '#BBF7D0',
   },
-  totalLabel: {fontSize: 15, fontWeight: 'bold', color: '#1a1a1a'},
-  totalVal: {fontSize: 16, fontWeight: 'bold', color: '#4CAF50'},
+  totalBoxLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: C.text,
+  },
+  totalBoxVal: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: C.green,
+  },
+
+  // CTA
   continueBtn: {
-    backgroundColor: '#F8CB46',
-    borderRadius: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
+    backgroundColor: C.yellow,
+    borderRadius: 14,
+    paddingVertical: 15,
+    paddingHorizontal: 36,
     alignItems: 'center',
     width: '100%',
+    elevation: 2,
+    shadowColor: C.yellow,
+    shadowOffset: {width: 0, height: 3},
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
   },
-  continueBtnText: {color: '#1a1a1a', fontSize: 16, fontWeight: 'bold'},
+  continueBtnTxt: {
+    color: '#1a1a1a',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  thanks: {
+    fontSize: 13,
+    color: C.light,
+    marginTop: 18,
+    textAlign: 'center',
+  },
 });
 
 export default SuccessScreen;
