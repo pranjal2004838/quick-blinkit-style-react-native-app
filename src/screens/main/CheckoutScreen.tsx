@@ -21,6 +21,7 @@ import {
   selectDeliveryFee,
   clearCart,
 } from '../../store/cartSlice';
+import {addOrder, deductWallet} from '../../store/userSlice';
 import {formatPrice} from '../../data/products';
 import {RootState} from '../../store';
 
@@ -99,6 +100,27 @@ const CheckoutScreen = ({navigation}: Props) => {
     const total = formatPrice(grandTotal);
 
     setTimeout(() => {
+      // 1. Add to past orders
+      dispatch(
+        addOrder({
+          id: orderId,
+          date: new Date().toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          }),
+          items: cartItems.map(i => `${i.product.name} x${i.qty}`).join(', '),
+          total: total,
+          status: 'On the way',
+        }),
+      );
+
+      // 2. Deduct from wallet if online
+      if (payMode === 'online') {
+        dispatch(deductWallet(grandTotal));
+      }
+
+      // 3. Clear cart and navigate
       dispatch(clearCart());
       navigation.navigate('Success', {
         orderId,

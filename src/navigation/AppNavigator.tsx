@@ -10,6 +10,7 @@ import HomeScreen from '../screens/main/HomeScreen';
 import CartScreen from '../screens/main/CartScreen';
 import CheckoutScreen from '../screens/main/CheckoutScreen';
 import SuccessScreen from '../screens/main/SuccessScreen';
+import ProfileScreen from '../screens/main/ProfileScreen';
 
 // keeping all params in one place so navigation.navigate() is type-safe
 export type RootStackParamList = {
@@ -26,6 +27,7 @@ export type RootStackParamList = {
     summary: string;
     totalDisplay: string;
   };
+  Profile: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -47,6 +49,7 @@ const AppNavigator = () => {
             <Stack.Screen name="Cart" component={CartScreen} />
             <Stack.Screen name="Checkout" component={CheckoutScreen} />
             <Stack.Screen name="Success" component={SuccessScreen} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
           </>
         )}
       </Stack.Navigator>

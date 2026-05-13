@@ -12,10 +12,12 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import authReducer from './authSlice';
 import cartReducer from './cartSlice';
+import userReducer from './userSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
   cart: cartReducer,
+  user: userReducer,
 });
 
 // persist everything (auth + cart) to AsyncStorage

@@ -135,10 +135,12 @@ const HomeScreen = ({navigation}: Props) => {
           </View>
         </View>
         <TouchableOpacity
-          style={styles.logoutBtn}
-          onPress={() => dispatch(logout())}
+          style={styles.profileBtn}
+          onPress={() => navigation.navigate('Profile')}
           hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-          <Text style={styles.logoutText}>Logout</Text>
+          <View style={styles.profileCircle}>
+            <Text style={styles.profileEmoji}>👤</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -256,14 +258,22 @@ const styles = StyleSheet.create({
   },
   deliveryDot: {fontSize: 8, color: '#1a1a1a', marginRight: 5},
   deliveryText: {fontSize: 12, fontWeight: '600', color: '#1a1a1a'},
-  logoutBtn: {
-    backgroundColor: 'rgba(0,0,0,0.12)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    marginTop: 6,
+  profileBtn: {
+    marginTop: 2,
   },
-  logoutText: {fontSize: 12, fontWeight: '700', color: '#1a1a1a'},
+  profileCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'rgba(0,0,0,0.06)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(0,0,0,0.1)',
+  },
+  profileEmoji: {
+    fontSize: 20,
+  },
 
   // search
   searchWrap: {
