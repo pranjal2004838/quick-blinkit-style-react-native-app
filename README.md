@@ -61,6 +61,13 @@ All screens are functional with no backend required — everything works offline
 - Total paid highlighted in green
 - **"Continue Shopping"** resets the nav stack to Home (no back-swipe to old order)
 
+### 7. 👤 Profile & Account
+- **User Info**: Avatar and phone number display
+- **Wallet**: Real-time balance view (persisted in Redux)
+- **Saved Addresses**: List of multiple addresses (Home/Office)
+- **Past Orders**: History of all orders placed with status and details
+- **Logout**: Securely clear auth state
+
 ---
 
 ## 🚀 Getting Started
@@ -101,6 +108,13 @@ npx react-native run-ios
 
 ---
 
+## 📦 Download APK
+
+The Android APK is automatically built on every push to the `main` branch. You can download the latest build from:
+**[GitHub Actions → Build APK → Latest Run → Artifacts](https://github.com/pranjal2004838/quick-blinkit-style-react-native-app/actions)**
+
+---
+
 ## 🛠️ Tech Stack
 
 | Layer | Technology |
@@ -115,6 +129,7 @@ npx react-native run-ios
 | Lifecycle | `AppState` listener for foreground/background detection |
 | Build — Android | Gradle 8.3 |
 | Build — iOS | CocoaPods |
+| CI/CD | **GitHub Actions** (Auto-APK build) |
 
 ---
 
